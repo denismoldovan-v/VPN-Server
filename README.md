@@ -42,3 +42,21 @@ This allows the server to be easily reconfigured without changing the source cod
   "private_key_path": "keys/private.pem",
   "public_key_path": "keys/public.pem"
 }
+
+```
+
+## 🚀 Getting Started
+
+1. Ensure you're running on a Linux system with /dev/net/tun available.
+2. Create the `keys/` folder if it doesn't exist.
+3. Generate RSA keys (once only):
+
+   from crypto_utils import generate_key_pair  
+   generate_key_pair("keys/private.pem", "keys/public.pem")
+
+4. Launch the VPN server with root privileges:
+
+   sudo python3 main.py
+
+5. Connect any SOCKS5-compatible client (e.g. curl, Firefox, proxychains) to:  
+   `localhost:1080`
