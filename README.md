@@ -1,0 +1,17 @@
+﻿## 📄 config.json
+
+The `config.json` file contains customizable configuration settings for the VPN server.  
+This allows the server to be easily reconfigured without changing the source code.
+
+### 🔧 Example structure:
+
+```json
+{
+  "tun_interface": "tun0",
+  "tun_ip": "10.0.0.1",
+  "tun_netmask": "255.255.255.0",
+  "socks5_port": 1080,
+  "log_file": "vpn.log",
+  "private_key_path": "keys/private.pem",
+  "public_key_path": "keys/public.pem"
+}
