@@ -1,4 +1,4 @@
-"""
+﻿"""
 Implements a minimal SOCKS5 proxy server.
 
 Receives client connections and:
@@ -12,19 +12,35 @@ import threading
 import struct
 
 def handle_client(client_socket):
-    # SOCKS5 handshake (version, methods)
-    client_socket.recv(2)         # Version + nmethods
-    client_socket.recv(1)         # Methods (we ignore and accept all)
-    client_socket.sendall(b"\x05\x00")  # Accept "no auth"
+    # SOCKS5 handshake
+    data = client_socket.recv(2)
+    if len(data) < 2:
+        client_socket.close()
+        return
+
+    ver, nmethods = struct.unpack("!BB", data)
+    methods = client_socket.recv(nmethods)
+    client_socket.sendall(b"\x05\x00")  # No authentication required
 
     # Request header
-    ver, cmd, _, atype = struct.unpack("!BBBB", client_socket.recv(4))
-    
+    header = client_socket.recv(4)
+    if len(header) < 4:
+        client_socket.close()
+        return
+
+    ver, cmd, _, atype = struct.unpack("!BBBB", header)
+
     if atype == 1:  # IPv4
         addr = socket.inet_ntoa(client_socket.recv(4))
+    elif atype == 3:  # Domain name
+        domain_len = client_socket.recv(1)[0]
+        addr = client_socket.recv(domain_len).decode()
+    elif atype == 4:  # IPv6 (opcjonalnie, jeśli chcesz obsłużyć)
+        addr = socket.inet_ntop(socket.AF_INET6, client_socket.recv(16))
     else:
         client_socket.close()
         return
+
 
     port = struct.unpack('!H', client_socket.recv(2))[0]
 
