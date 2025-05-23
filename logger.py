@@ -15,7 +15,7 @@ def setup_logger(log_file: str) -> logging.Logger:
 
     formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
 
-    file_handler = logging.FileHandler(log_file)
+    file_handler = logging.FileHandler(log_file, mode="w")
     file_handler.setFormatter(formatter)
 
     if not logger.hasHandlers():
