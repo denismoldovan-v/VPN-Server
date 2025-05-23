@@ -3,7 +3,7 @@ import threading
 import os
 from tun_interface import create_tun_interface, configure_interface
 
-SERVER_IP = "192.0.2.1"  # ← ZMIEŃ na adres IP Twojego serwera
+SERVER_IP = "91.99.126.179"  # ← ZMIEŃ na adres IP Twojego serwera
 SERVER_PORT = 5555
 
 def forward_tun_to_socket(tun_fd, sock):
