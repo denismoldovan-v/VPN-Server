@@ -80,3 +80,15 @@ Data flow:
 Client (SOCKS5) → SOCKS5 Proxy → TUN Interface → Internet
                                 ↑
                            RSA Keys & Logging
+
+
+
+## 🔐 Security Considerations
+
+| Weakness                             | Recommended Mitigation                                       |
+|--------------------------------------|--------------------------------------------------------------|
+| No encryption between client/server  | Use TLS (e.g. stunnel) or wrap in SSH tunnels                |
+| No authentication on SOCKS5 proxy    | Implement username/password authentication (RFC 1929)        |
+| No packet filtering                  | Use iptables or nftables to restrict unwanted destinations   |
+| No monitoring or restart strategy    | Deploy under systemd with watchdog or use Docker healthchecks|
+| File-based logging only              | Integrate with syslog or log forwarding tools (e.g. ELK)     |
