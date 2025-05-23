@@ -1,0 +1,3 @@
+pycryptodome
+python-socks
+pytest
