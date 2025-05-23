@@ -60,3 +60,23 @@ This allows the server to be easily reconfigured without changing the source cod
 
 5. Connect any SOCKS5-compatible client (e.g. curl, Firefox, proxychains) to:  
    `localhost:1080`
+
+
+## 🧱 Architecture
+
+The VPN server consists of three main components working together:
+
+1. **SOCKS5 Proxy Server**  
+   Accepts TCP connections from SOCKS5-compatible clients and relays them to the destination.
+
+2. **TUN Interface (`tun0`)**  
+   A virtual network interface used to route and capture packets within the server's operating system.
+
+3. **Main Controller (`main.py`)**  
+   Initializes the system, sets up configuration, logging, TUN interface, and starts the SOCKS5 proxy.
+
+Data flow:
+
+Client (SOCKS5) → SOCKS5 Proxy → TUN Interface → Internet
+                                ↑
+                           RSA Keys & Logging
