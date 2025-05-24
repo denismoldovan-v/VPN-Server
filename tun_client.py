@@ -35,7 +35,8 @@ def authenticate_with_server(sock):
 def main():
     try:
         raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        context = ssl.create_default_context()
+        context = ssl.create_default_context(cafile="tls/cert.pem")
+        context.check_hostname = False
         sock = context.wrap_socket(raw_sock, server_hostname=SERVER_IP)
         sock.connect((SERVER_IP, SERVER_PORT))
         logger.info("[VPN CLIENT] Connected to server with TLS")
