@@ -2,6 +2,8 @@
 import threading
 import os
 from tun_interface import create_tun_interface, configure_interface
+from crypto_utils import load_private_key, sign_with_private_key
+
 
 SERVER_IP = "91.99.126.179"  # ← ZMIEŃ na adres IP Twojego serwera
 SERVER_PORT = 5555
@@ -26,6 +28,20 @@ def main():
     # Łączymy się z serwerem
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((SERVER_IP, SERVER_PORT))
+
+    private_key = load_private_key("keys/client_private.pem")  # nowy plik z kluczem prywatnym klienta
+
+    nonce = sock.recv(32)
+    signature = sign_with_private_key(nonce, private_key)
+    sock.sendall(signature)
+
+      
+    private_key = load_private_key("keys/client_private.pem")  # nowy plik z kluczem prywatnym klienta
+
+    nonce = sock.recv(32)
+    signature = sign_with_private_key(nonce, private_key)
+    sock.sendall(signature)
+
 
     # Przepychamy pakiety
     threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock)).start()
