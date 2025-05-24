@@ -30,16 +30,22 @@ def authenticate_with_server(sock):
     sock.sendall(signature)
 
 def main():
-    # Tworzymy interfejs TUN
-    tun_fd = create_tun_interface("tun0")
-    configure_interface("tun0", "10.0.0.2", "255.255.255.0")  # ← adres klienta
-
     # Łączymy się z serwerem
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((SERVER_IP, SERVER_PORT))
 
     # Uwierzytelnianie
     authenticate_with_server(sock)
+    # Tworzymy interfejs TUN
+    tun_fd = create_tun_interface("tun0")
+
+    # Odbierz przydzielony adres IP od serwera (4 bajty)
+    assigned_ip_bytes = sock.recv(4)
+    assigned_ip = socket.inet_ntoa(assigned_ip_bytes)
+
+    # Skonfiguruj TUN z dynamicznie przydzielonym IP
+    configure_interface("tun0", assigned_ip, "255.255.255.0")
+    print(f"[VPN CLIENT] Configured TUN with IP {assigned_ip}")
 
     # Przepychamy pakiety
     threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock)).start()
