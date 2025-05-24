@@ -65,7 +65,13 @@ def handle_client(client_sock, addr):
 
 def main():
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_sock.bind(("0.0.0.0", SERVER_PORT))
+
+    try:
+        server_sock.bind(("0.0.0.0", SERVER_PORT))
+    except OSError as e:
+        print(f"[ERROR] Cannot bind to port {SERVER_PORT}: {e}")
+        exit(1)
+
     server_sock.listen(5)
     print(f"[VPN SERVER] Listening on port {SERVER_PORT}...")
 
