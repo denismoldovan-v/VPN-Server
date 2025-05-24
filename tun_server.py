@@ -38,23 +38,35 @@ CLIENT_PUBKEY_PATH = "keys/public.pem"
 client_counter = 0
 counter_lock = threading.Lock()
 
-def forward_tun_to_socket(tun_fd, client_sock):
-    while True:
-        try:
+
+def cleanup_interface(name):
+    try:
+        print(f"[CLEANUP] Deleting interface {name}")
+        subprocess.run(["ip", "link", "delete", name], check=True)
+    except Exception as e:
+        print(f"[CLEANUP ERROR] Could not delete {name}: {e}")
+
+def forward_tun_to_socket(tun_fd, client_sock, tun_name):
+    try:
+        while True:
             packet = os.read(tun_fd, 2048)
             client_sock.sendall(packet)
-        except:
-            break
+    except:
+        pass
+    finally:
+        cleanup_interface(tun_name)
 
-def forward_socket_to_tun(client_sock, tun_fd):
-    while True:
-        try:
+def forward_socket_to_tun(client_sock, tun_fd, tun_name):
+    try:
+        while True:
             packet = client_sock.recv(2048)
             if not packet:
                 break
             os.write(tun_fd, packet)
-        except:
-            break
+    except:
+        pass
+    finally:
+        cleanup_interface(tun_name)
 
 def authenticate_client(sock) -> bool:
     client_pubkey = load_public_key(CLIENT_PUBKEY_PATH)
@@ -96,8 +108,8 @@ def handle_client(client_sock, addr):
 
     print(f"[VPN SERVER] TUN interface {tun_name} set up for {addr}")
 
-    threading.Thread(target=forward_tun_to_socket, args=(tun_fd, client_sock), daemon=True).start()
-    threading.Thread(target=forward_socket_to_tun, args=(client_sock, tun_fd), daemon=True).start()
+    threading.Thread(target=forward_tun_to_socket, args=(tun_fd, client_sock, tun_name), daemon=True).start()
+    threading.Thread(target=forward_socket_to_tun, args=(client_sock, tun_fd, tun_name), daemon=True).start()
 
 def main():
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
