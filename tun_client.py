@@ -1,6 +1,7 @@
 ﻿import socket
 import threading
 import os
+import time
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_private_key, sign_with_private_key
 
@@ -36,16 +37,17 @@ def main():
 
     # Uwierzytelnianie
     authenticate_with_server(sock)
-    # Tworzymy interfejs TUN
-    tun_fd = create_tun_interface("tun0")
 
     # Odbierz przydzielony adres IP od serwera (4 bajty)
     assigned_ip_bytes = sock.recv(4)
     assigned_ip = socket.inet_ntoa(assigned_ip_bytes)
 
-    # Skonfiguruj TUN z dynamicznie przydzielonym IP
-    configure_interface("tun0", assigned_ip, "255.255.255.0")
-    print(f"[VPN CLIENT] Configured TUN with IP {assigned_ip}")
+    tun_name = f"tun{os.getpid() % 1000}{int(time.time()) % 1000}"
+
+    # Tworzymy interfejs TUN z dynamiczną nazwą
+    tun_fd = create_tun_interface(tun_name)
+    configure_interface(tun_name, assigned_ip, "255.255.255.0")
+    print(f"[VPN CLIENT] Configured TUN interface: {tun_name} with IP {assigned_ip}")
 
     # Przepychamy pakiety
     threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock)).start()
