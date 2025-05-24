@@ -4,7 +4,7 @@ import os
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_private_key, sign_with_private_key
 
-SERVER_IP = "91.99.126.179"  # ← ZMIEŃ na IP Twojego serwera
+SERVER_IP = "91.99.126.179"  
 SERVER_PORT = 5555
 
 def forward_tun_to_socket(tun_fd, sock):
