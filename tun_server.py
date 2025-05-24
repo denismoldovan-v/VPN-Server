@@ -9,6 +9,9 @@ import sys
 
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_public_key, verify_signature
+from logger import setup_logger
+
+logger = setup_logger("vpn.log")
 
 #cleanup for previously created interfaces
 created_interfaces = []
@@ -18,15 +21,15 @@ SERVER_TUN_IP = "10.8.0.1"
 def delete_interfaces():
     for iface in created_interfaces:
         try:
-            print(f"[CLEANUP] Deleting interface {iface}")
+            logger.info(f"[CLEANUP] Deleting interface {iface}")
             subprocess.run(["ip", "link", "delete", iface], check=True)
         except Exception as e:
-            print(f"[CLEANUP ERROR] Could not delete {iface}: {e}")
+            logger.warning(f"[CLEANUP ERROR] Could not delete {iface}: {e}")
 
 atexit.register(delete_interfaces)
 
 def handle_signal(sig, frame):
-    print("[SIGNAL] Caught termination signal.")
+    logger.info("[SIGNAL] Caught termination signal.")
     sys.exit(0)
 
 signal.signal(signal.SIGINT, handle_signal)
@@ -38,13 +41,12 @@ CLIENT_PUBKEY_PATH = "keys/public.pem"
 client_counter = 0
 counter_lock = threading.Lock()
 
-
 def cleanup_interface(name):
     try:
-        print(f"[CLEANUP] Deleting interface {name}")
+        logger.info(f"[CLEANUP] Deleting interface {name}")
         subprocess.run(["ip", "link", "delete", name], check=True)
     except Exception as e:
-        print(f"[CLEANUP ERROR] Could not delete {name}: {e}")
+        logger.warning(f"[CLEANUP ERROR] Could not delete {name}: {e}")
 
 def forward_tun_to_socket(tun_fd, client_sock, tun_name):
     try:
@@ -78,12 +80,12 @@ def authenticate_client(sock) -> bool:
 def handle_client(client_sock, addr):
     global client_counter
 
-    print(f"[VPN SERVER] New connection from {addr}")
+    logger.info(f"[VPN SERVER] New connection from {addr}")
     if not authenticate_client(client_sock):
-        print(f"[VPN SERVER] Client {addr} failed authentication.")
+        logger.info(f"[VPN SERVER] Client {addr} failed authentication.")
         client_sock.close()
         return
-    print(f"[VPN SERVER] Client {addr} authenticated.")
+    logger.info(f"[VPN SERVER] Client {addr} authenticated.")
 
     with counter_lock:
         tun_id = client_counter
@@ -92,12 +94,12 @@ def handle_client(client_sock, addr):
     tun_name = f"tun{tun_id + 1}"  # tun1, tun2, ...
     created_interfaces.append(tun_name)
 
-    tun_ip = f"10.0.0.{tun_id + 1}"  # unikalny IP np. 10.0.0.2, 10.0.0.3 itd.
+    tun_ip = f"10.0.0.{tun_id + 1}"
 
     tun_fd = create_tun_interface(tun_name)
 
     client_ip = f"10.8.0.{tun_id + 2}"
-    server_ip = SERVER_TUN_IP  # np. "10.8.0.1"
+    server_ip = SERVER_TUN_IP
 
     configure_interface(tun_name, server_ip, "255.255.255.0")
 
@@ -105,8 +107,7 @@ def handle_client(client_sock, addr):
     client_sock.sendall(socket.inet_aton(client_ip))
     client_sock.sendall(socket.inet_aton(server_ip))
 
-
-    print(f"[VPN SERVER] TUN interface {tun_name} set up for {addr}")
+    logger.info(f"[VPN SERVER] TUN interface {tun_name} set up for {addr}")
 
     threading.Thread(target=forward_tun_to_socket, args=(tun_fd, client_sock, tun_name), daemon=True).start()
     threading.Thread(target=forward_socket_to_tun, args=(client_sock, tun_fd, tun_name), daemon=True).start()
@@ -117,11 +118,11 @@ def main():
     try:
         server_sock.bind(("0.0.0.0", SERVER_PORT))
     except OSError as e:
-        print(f"[ERROR] Cannot bind to port {SERVER_PORT}: {e}")
+        logger.error(f"[ERROR] Cannot bind to port {SERVER_PORT}: {e}")
         exit(1)
 
     server_sock.listen(5)
-    print(f"[VPN SERVER] Listening on port {SERVER_PORT}...")
+    logger.info(f"[VPN SERVER] Listening on port {SERVER_PORT}...")
 
     while True:
         client_sock, addr = server_sock.accept()
