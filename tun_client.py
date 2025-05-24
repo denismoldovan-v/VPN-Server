@@ -38,16 +38,15 @@ def main():
     # Uwierzytelnianie
     authenticate_with_server(sock)
 
-    # Odbierz przydzielony adres IP od serwera (4 bajty)
-    assigned_ip_bytes = sock.recv(4)
-    assigned_ip = socket.inet_ntoa(assigned_ip_bytes)
+    client_ip = socket.inet_ntoa(sock.recv(4))
+    server_ip = socket.inet_ntoa(sock.recv(4))
 
     tun_name = f"tun{os.getpid() % 1000}{int(time.time()) % 1000}"
 
-    # Tworzymy interfejs TUN z dynamiczną nazwą
     tun_fd = create_tun_interface(tun_name)
-    configure_interface(tun_name, assigned_ip, "255.255.255.0")
-    print(f"[VPN CLIENT] Configured TUN interface: {tun_name} with IP {assigned_ip}")
+    configure_interface(tun_name, client_ip, "255.255.255.0")
+
+    print(f"[VPN CLIENT] Configured TUN interface: {tun_name} with IP {client_ip}, server peer: {server_ip}")
 
     # Przepychamy pakiety
     threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock)).start()

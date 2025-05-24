@@ -13,6 +13,8 @@ from crypto_utils import load_public_key, verify_signature
 #cleanup for previously created interfaces
 created_interfaces = []
 
+SERVER_TUN_IP = "10.8.0.1"
+
 def delete_interfaces():
     for iface in created_interfaces:
         try:
@@ -77,11 +79,20 @@ def handle_client(client_sock, addr):
 
     tun_name = f"tun{tun_id + 1}"  # tun1, tun2, ...
     created_interfaces.append(tun_name)
+
     tun_ip = f"10.0.0.{tun_id + 1}"  # unikalny IP np. 10.0.0.2, 10.0.0.3 itd.
 
     tun_fd = create_tun_interface(tun_name)
-    configure_interface(tun_name, tun_ip, "255.255.255.0")
-    client_sock.sendall(socket.inet_aton(tun_ip))
+
+    client_ip = f"10.8.0.{tun_id + 2}"
+    server_ip = SERVER_TUN_IP  # np. "10.8.0.1"
+
+    configure_interface(tun_name, server_ip, "255.255.255.0")
+
+    # Wyślij oba IP do klienta
+    client_sock.sendall(socket.inet_aton(client_ip))
+    client_sock.sendall(socket.inet_aton(server_ip))
+
 
     print(f"[VPN SERVER] TUN interface {tun_name} set up for {addr}")
 
