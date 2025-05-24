@@ -7,7 +7,7 @@ from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_public_key, verify_signature
 
 SERVER_PORT = 5555
-CLIENT_PUBKEY_PATH = "keys/client_public.pem"  # nowy plik z kluczem publicznym klienta
+CLIENT_PUBKEY_PATH = "keys/public.pem"  # nowy plik z kluczem publicznym klienta
 
 def forward_tun_to_socket(tun_fd, client_sock):
     while True:

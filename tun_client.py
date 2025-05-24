@@ -20,7 +20,7 @@ def forward_socket_to_tun(sock, tun_fd):
         os.write(tun_fd, packet)
 
 def authenticate_with_server(sock):
-    private_key = load_private_key("keys/client_private.pem")  # Twój klucz prywatny klienta
+    private_key = load_private_key("keys/private.pem")  # Twój klucz prywatny klienta
 
     # Odbierz nonce od serwera
     nonce = sock.recv(32)
