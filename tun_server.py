@@ -6,6 +6,7 @@ import atexit
 import subprocess
 import signal
 import sys
+import ssl
 
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_public_key, verify_signature
@@ -113,20 +114,27 @@ def handle_client(client_sock, addr):
     threading.Thread(target=forward_socket_to_tun, args=(client_sock, tun_fd, tun_name), daemon=True).start()
 
 def main():
-    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     try:
-        server_sock.bind(("0.0.0.0", SERVER_PORT))
+        raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        raw_sock.bind(("0.0.0.0", SERVER_PORT))
+        raw_sock.listen(5)
+        logger.info(f"[VPN SERVER - TLS] Listening on port {SERVER_PORT} (TLS)")
     except OSError as e:
         logger.error(f"[ERROR] Cannot bind to port {SERVER_PORT}: {e}")
         exit(1)
 
-    server_sock.listen(5)
-    logger.info(f"[VPN SERVER] Listening on port {SERVER_PORT}...")
+    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    context.load_cert_chain(certfile="tls/cert.pem", keyfile="tls/key.pem")
 
     while True:
-        client_sock, addr = server_sock.accept()
-        threading.Thread(target=handle_client, args=(client_sock, addr), daemon=True).start()
+        try:
+            client_sock, addr = raw_sock.accept()
+            tls_sock = context.wrap_socket(client_sock, server_side=True)
+            threading.Thread(target=handle_client, args=(tls_sock, addr), daemon=True).start()
+        except ssl.SSLError as e:
+            logger.warning(f"[TLS ERROR] Failed TLS handshake: {e}")
+        except Exception as e:
+            logger.error(f"[ERROR] Unexpected error: {e}")
 
 if __name__ == "__main__":
     main()
