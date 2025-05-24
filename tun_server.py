@@ -2,9 +2,33 @@
 import threading
 import os
 import secrets
+import atexit
+import subprocess
+import signal
+import sys
 
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_public_key, verify_signature
+
+#cleanup for previously created interfaces
+created_interfaces = []
+
+def delete_interfaces():
+    for iface in created_interfaces:
+        try:
+            print(f"[CLEANUP] Deleting interface {iface}")
+            subprocess.run(["ip", "link", "delete", iface], check=True)
+        except Exception as e:
+            print(f"[CLEANUP ERROR] Could not delete {iface}: {e}")
+
+atexit.register(delete_interfaces)
+
+def handle_signal(sig, frame):
+    print("[SIGNAL] Caught termination signal.")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
 
 SERVER_PORT = 5555
 CLIENT_PUBKEY_PATH = "keys/public.pem"
@@ -52,6 +76,7 @@ def handle_client(client_sock, addr):
         client_counter += 1
 
     tun_name = f"tun{tun_id + 1}"  # tun1, tun2, ...
+    created_interfaces.append(tun_name)
     tun_ip = f"10.0.0.{tun_id + 1}"  # unikalny IP np. 10.0.0.2, 10.0.0.3 itd.
 
     tun_fd = create_tun_interface(tun_name)
