@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Sprawdzenie czy python3 -m venv działa
+python3 -m venv --help >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo " Brakuje python3-venv. Zainstaluj go komendą:"
+    echo "    sudo apt install python3-venv"
+    exit 1
+fi
+
+
 VENV_DIR="./vpn-venv"  
 
 if [ ! -d "$VENV_DIR" ]; then
