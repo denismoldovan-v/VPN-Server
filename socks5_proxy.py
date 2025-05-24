@@ -95,9 +95,12 @@ def handle_client(client_socket):
                 data = src.recv(4096)
                 if not data:
                     break
+                logger.info(f"[SOCKS5] Relaying {len(data)} bytes")
                 dst.sendall(data)
-            except:
+            except Exception as e:
+                logger.warning(f"[SOCKS5] Relay error: {e}")
                 break
+
 
     threading.Thread(target=relay, args=(client_socket, remote)).start()
     threading.Thread(target=relay, args=(remote, client_socket)).start()
