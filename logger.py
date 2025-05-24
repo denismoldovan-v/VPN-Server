@@ -18,7 +18,11 @@ def setup_logger(log_file: str) -> logging.Logger:
     file_handler = logging.FileHandler(log_file, mode="w")
     file_handler.setFormatter(formatter)
 
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+
     if not logger.hasHandlers():
         logger.addHandler(file_handler)
+        logger.addHandler(stream_handler)
 
     return logger
