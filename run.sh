@@ -26,5 +26,7 @@ else
 fi
 
 
-echo "Uruchamianie serwera VPN..."
-sudo env "PATH=$(realpath $VENV_DIR)/bin:$PATH" python main.py
+echo "Uruchamianie serwera VPN (main.py + tun_server.py)..."
+sudo env "PATH=$(realpath $VENV_DIR)/bin:$PATH" python3 main.py &
+sudo env "PATH=$(realpath $VENV_DIR)/bin:$PATH" python3 tun_server.py
+
