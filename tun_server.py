@@ -56,6 +56,7 @@ def handle_client(client_sock, addr):
 
     tun_fd = create_tun_interface(tun_name)
     configure_interface(tun_name, tun_ip, "255.255.255.0")
+    client_sock.sendall(socket.inet_aton(tun_ip))
 
     print(f"[VPN SERVER] TUN interface {tun_name} set up for {addr}")
 
