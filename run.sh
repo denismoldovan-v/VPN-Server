@@ -14,11 +14,12 @@ source "$VENV_DIR/bin/activate"
 # Instalacja zależności
 if [ -f requirements.txt ]; then
     echo "Instalacja pakietów z requirements.txt"
+    pip install --upgrade pip >/dev/null
     pip install -r requirements.txt
 else
     echo "Brak pliku requirements.txt"
 fi
 
-# Uruchomienie aplikacji z uprawnieniami administratora
+# Uruchamianie serwera VPN z użyciem venv, zachowując środowisko przy sudo
 echo "Uruchamianie serwera VPN..."
-sudo "$VENV_DIR/bin/python3" main.py
+sudo env "PATH=$VENV_DIR/bin:$PATH" python main.py
