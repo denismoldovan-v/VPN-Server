@@ -4,8 +4,7 @@ import os
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_private_key, sign_with_private_key
 
-
-SERVER_IP = "91.99.126.179"  # ← ZMIEŃ na adres IP Twojego serwera
+SERVER_IP = "91.99.126.179"  # ← ZMIEŃ na IP Twojego serwera
 SERVER_PORT = 5555
 
 def forward_tun_to_socket(tun_fd, sock):
@@ -20,6 +19,16 @@ def forward_socket_to_tun(sock, tun_fd):
             break
         os.write(tun_fd, packet)
 
+def authenticate_with_server(sock):
+    private_key = load_private_key("keys/client_private.pem")  # Twój klucz prywatny klienta
+
+    # Odbierz nonce od serwera
+    nonce = sock.recv(32)
+    # Podpisz nonce
+    signature = sign_with_private_key(nonce, private_key)
+    # Wyślij podpis z powrotem
+    sock.sendall(signature)
+
 def main():
     # Tworzymy interfejs TUN
     tun_fd = create_tun_interface("tun0")
@@ -29,19 +38,8 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((SERVER_IP, SERVER_PORT))
 
-    private_key = load_private_key("keys/client_private.pem")  # nowy plik z kluczem prywatnym klienta
-
-    nonce = sock.recv(32)
-    signature = sign_with_private_key(nonce, private_key)
-    sock.sendall(signature)
-
-      
-    private_key = load_private_key("keys/client_private.pem")  # nowy plik z kluczem prywatnym klienta
-
-    nonce = sock.recv(32)
-    signature = sign_with_private_key(nonce, private_key)
-    sock.sendall(signature)
-
+    # Uwierzytelnianie
+    authenticate_with_server(sock)
 
     # Przepychamy pakiety
     threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock)).start()
