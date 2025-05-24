@@ -8,18 +8,16 @@ if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv "$VENV_DIR"
 fi
 
-# Aktywacja środowiska
-source "$VENV_DIR/bin/activate"
-
-# Instalacja zależności
+# Instalacja zależności bez aktywacji venv (bo i tak uruchamiamy z PATH)
 if [ -f requirements.txt ]; then
     echo "Instalacja pakietów z requirements.txt"
-    pip install --upgrade pip >/dev/null
-    pip install -r requirements.txt
+    "$VENV_DIR/bin/pip" install --upgrade pip >/dev/null
+    "$VENV_DIR/bin/pip" install -r requirements.txt
 else
     echo "Brak pliku requirements.txt"
+    exit 1
 fi
 
-# Uruchamianie serwera VPN z użyciem venv, zachowując środowisko przy sudo
+# Uruchomienie aplikacji z uprawnieniami root i z venv w PATH
 echo "Uruchamianie serwera VPN..."
 sudo env "PATH=$VENV_DIR/bin:$PATH" python main.py
