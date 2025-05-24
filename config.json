@@ -5,5 +5,7 @@
   "socks5_port": 1080,
   "log_file": "vpn.log",
   "private_key_path": "keys/private.pem",
-  "public_key_path": "keys/public.pem"
+  "public_key_path": "keys/public.pem",
+  "socks5_username": "vpnuser",
+  "socks5_password": "vpnpass"
 }

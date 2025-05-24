@@ -10,6 +10,14 @@ Receives client connections and:
 import socket
 import threading
 import struct
+import json
+
+# Wczytaj dane z config.json
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+USERNAME = config.get("socks5_username", "")
+PASSWORD = config.get("socks5_password", "")
 
 def handle_client(client_socket):
     # SOCKS5 handshake
@@ -20,7 +28,32 @@ def handle_client(client_socket):
 
     ver, nmethods = struct.unpack("!BB", data)
     methods = client_socket.recv(nmethods)
-    client_socket.sendall(b"\x05\x00")  # No authentication required
+
+    if 0x02 not in methods:
+        client_socket.sendall(b"\x05\xFF")  # brak wspólnej metody
+        client_socket.close()
+        return
+
+    client_socket.sendall(b"\x05\x02")  # wybieramy Username/Password
+
+    # Autoryzacja RFC1929
+    auth_ver = client_socket.recv(1)
+    if auth_ver != b"\x01":
+        client_socket.close()
+        return
+
+    ulen = client_socket.recv(1)[0]
+    uname = client_socket.recv(ulen).decode()
+
+    plen = client_socket.recv(1)[0]
+    passwd = client_socket.recv(plen).decode()
+
+    if uname != USERNAME or passwd != PASSWORD:
+        client_socket.sendall(b"\x01\x01")  # auth failed
+        client_socket.close()
+        return
+
+    client_socket.sendall(b"\x01\x00")  # auth success
 
     # Request header
     header = client_socket.recv(4)
@@ -35,12 +68,11 @@ def handle_client(client_socket):
     elif atype == 3:  # Domain name
         domain_len = client_socket.recv(1)[0]
         addr = client_socket.recv(domain_len).decode()
-    elif atype == 4:  # IPv6 (opcjonalnie, jeśli chcesz obsłużyć)
+    elif atype == 4:  # IPv6
         addr = socket.inet_ntop(socket.AF_INET6, client_socket.recv(16))
     else:
         client_socket.close()
         return
-
 
     port = struct.unpack('!H', client_socket.recv(2))[0]
 
@@ -53,7 +85,6 @@ def handle_client(client_socket):
         client_socket.close()
         return
 
-    # Relay
     def relay(src, dst):
         while True:
             try:
