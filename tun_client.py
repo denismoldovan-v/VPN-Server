@@ -2,8 +2,12 @@
 import threading
 import os
 import time
+
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_private_key, sign_with_private_key
+from logger import setup_logger
+
+logger = setup_logger("vpn.log")
 
 SERVER_IP = "91.99.126.179"  
 SERVER_PORT = 5555
@@ -46,7 +50,7 @@ def main():
     tun_fd = create_tun_interface(tun_name)
     configure_interface(tun_name, client_ip, "255.255.255.0")
 
-    print(f"[VPN CLIENT] Configured TUN interface: {tun_name} with IP {client_ip}, server peer: {server_ip}")
+    logger.info(f"[VPN CLIENT] Configured TUN interface: {tun_name} with IP {client_ip}, server peer: {server_ip}")
 
     # Przepychamy pakiety
     threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock)).start()

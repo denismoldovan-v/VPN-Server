@@ -12,6 +12,10 @@ import threading
 import struct
 import json
 
+from logger import setup_logger
+
+logger = setup_logger("vpn.log")
+
 # Wczytaj dane z config.json
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -102,7 +106,7 @@ def start_socks5_proxy(port: int):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(("0.0.0.0", port))
     server.listen(5)
-    print(f"[SOCKS5] Listening on port {port}")
+    logger.info(f"[SOCKS5] Listening on port {port}")
 
     while True:
         client, _ = server.accept()
