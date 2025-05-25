@@ -84,7 +84,6 @@ This will:
 - Clean up all TUN interfaces and processes
 
 
-
 ## 🧱 Architecture
 
 The VPN system consists of two main components: a **client** and a **server**, communicating over a secure TLS tunnel and using a TUN interface for traffic redirection.
