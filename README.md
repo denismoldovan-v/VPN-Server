@@ -10,12 +10,16 @@ Built to:
 
 ## ✨ Features
 
-- TUN interface creation and configuration via /dev/net/tun
-- SOCKS5 proxy server for TCP traffic tunneling
-- RSA key pair generation and loading (PEM format)
-- Config-driven architecture via config.json
-- Centralized logging to a rotating file
-- Fully modular Python codebase, easy to extend
+- TUN interface creation and configuration via `/dev/net/tun`
+- TLS encryption between client and server using RSA certificates
+- Client authentication via signed nonce using RSA key pairs
+- SOCKS5 proxy server for TCP traffic tunneling with username/password authentication (RFC 1929)
+- IP-based rate limiting to protect against brute-force or DoS attacks
+- Isolated TUN interfaces and unique IPs per client
+- Centralized logging with timestamps to `vpn.log`
+- Configurable architecture via `config.json`
+- Modular Python codebase, easy to extend and adapt
+
 
 ## 🧰 Requirements
 
