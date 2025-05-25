@@ -68,23 +68,34 @@ This allows the server to be easily reconfigured without changing the source cod
 
 ## 🧱 Architecture
 
-The VPN server consists of three main components working together:
+The VPN system consists of two main components: a **client** and a **server**, communicating over a secure TLS tunnel and using a TUN interface for traffic redirection.
 
-1. **SOCKS5 Proxy Server**  
-   Accepts TCP connections from SOCKS5-compatible clients and relays them to the destination.
+### 🔧 Components
 
-2. **TUN Interface (`tun0`)**  
-   A virtual network interface used to route and capture packets within the server's operating system.
+1. **VPN Server Controller (`tun_server.py`)**  
+   - Accepts incoming TLS connections  
+   - Authenticates clients using RSA key signatures  
+   - Assigns a dedicated TUN interface and IP per client  
+   - Starts the embedded SOCKS5 proxy  
 
-3. **Main Controller (`main.py`)**  
-   Initializes the system, sets up configuration, logging, TUN interface, and starts the SOCKS5 proxy.
+2. **SOCKS5 Proxy (`socks5_proxy.py`)**  
+   - Accepts TCP connections from SOCKS5-compatible clients  
+   - Authenticates users via username and password (RFC 1929)  
+   - Forwards traffic to target destinations via the TUN interface  
 
-Data flow:
+3. **VPN Client (`tun_client.py`)**  
+   - Initiates a TLS connection to the server  
+   - Authenticates with a private RSA key  
+   - Receives a unique private IP and sets up a local TUN interface  
+   - Tunnels all TCP traffic through the VPN
 
-Client (SOCKS5) → SOCKS5 Proxy → TUN Interface → Internet
-                                ↑
-                           RSA Keys & Logging
+---
 
+### 🔁 Data Flow
+
+Client (SOCKS5) → SOCKS5 Proxy → TUN Interface → Internet  
+                  ↑  
+            RSA Keys & Logging
 
 
 ## 🔐 Security Considerations
