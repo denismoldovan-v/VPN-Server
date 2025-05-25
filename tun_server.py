@@ -46,8 +46,11 @@ def cleanup_interface(name):
     try:
         logger.info(f"[CLEANUP] Deleting interface {name}")
         subprocess.run(["ip", "link", "delete", name], check=True)
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"[CLEANUP] Interface {name} may already be deleted. Skipping. ({e})")
     except Exception as e:
-        logger.warning(f"[CLEANUP ERROR] Could not delete {name}: {e}")
+        logger.error(f"[CLEANUP ERROR] Unexpected error when deleting {name}: {e}")
+
 
 def forward_tun_to_socket(tun_fd, client_sock, tun_name):
     try:
