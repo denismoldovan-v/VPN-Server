@@ -7,10 +7,14 @@ import subprocess
 import signal
 import sys
 import ssl
+import threading
+import json
+
 
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_public_key, verify_signature
 from logger import setup_logger
+from socks5_proxy import start_socks5_proxy
 
 logger = setup_logger("vpn.log")
 
@@ -117,11 +121,16 @@ def handle_client(client_sock, addr):
     threading.Thread(target=forward_socket_to_tun, args=(client_sock, tun_fd, tun_name), daemon=True).start()
 
 def main():
+    with open("config.json", "r") as f:
+        config = json.load(f)
+
     try:
         raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         raw_sock.bind(("0.0.0.0", SERVER_PORT))
         raw_sock.listen(5)
         logger.info(f"[VPN SERVER - TLS] Listening on port {SERVER_PORT} (TLS)")
+        threading.Thread(target=start_socks5_proxy, args=(config["socks5_port"],), daemon=True).start()
+        logger.info(f"[VPN SERVER] Embedded SOCKS5 proxy started on port {config['socks5_port']}")
     except OSError as e:
         logger.error(f"[ERROR] Cannot bind to port {SERVER_PORT}: {e}")
         exit(1)
