@@ -85,10 +85,25 @@ Client (SOCKS5) → SOCKS5 Proxy → TUN Interface → Internet
 
 ## 🔐 Security Considerations
 
-| Weakness                             | Recommended Mitigation                                       |
-|--------------------------------------|--------------------------------------------------------------|
-| No encryption between client/server  | Use TLS (e.g. stunnel) or wrap in SSH tunnels                |
-| No authentication on SOCKS5 proxy    | Implement username/password authentication (RFC 1929)        |
-| No packet filtering                  | Use iptables or nftables to restrict unwanted destinations   |
-| No monitoring or restart strategy    | Deploy under systemd with watchdog or use Docker healthchecks|
-| File-based logging only              | Integrate with syslog or log forwarding tools (e.g. ELK)     |
+This VPN server was built with practical security in mind. Below is an overview of implemented features and what remains to be addressed for full production hardening:
+
+| Area                                | Status      | Description                                                                 |
+|-------------------------------------|-------------|-----------------------------------------------------------------------------|
+| TLS encryption                      | ✅ Done      | All communication between client and server is encrypted using TLS over port 5555. Self-signed certificates are used by default. |
+| Client authentication (VPN layer)   | ✅ Done      | Clients must prove identity by signing a server-provided nonce with their RSA private key. |
+| SOCKS5 authentication (proxy layer) | ✅ Done      | Username and password authentication implemented per RFC 1929.              |
+| Rate limiting / DoS protection      | ✅ Done      | Per-IP connection attempts are rate-limited (e.g., 5 attempts per 60s). Clients exceeding the limit are temporarily blocked. |
+| Isolated TUN interfaces             | ✅ Done      | Each client is assigned a unique TUN interface and private IP.              |
+| Interface cleanup                   | ✅ Done      | TUN interfaces are deleted automatically when a client disconnects.         |
+| Logging with timestamps             | ✅ Done      | All events (auth, errors, SOCKS5 relays) are logged to `vpn.log`.           |
+| SOCKS5 proxy integration            | ✅ Done      | The proxy server is launched in a thread inside the main VPN process.       |
+| TLS cert from CA (e.g. Let's Encrypt)| ❌ Not yet  | Current TLS certificates are self-signed. Use a CA-signed cert for production. |
+| Packet filtering / firewall rules   | ❌ Not yet   | No filtering of traffic or destination IPs. Recommend `iptables` or `nftables`. |
+| Persistent blacklisting             | ❌ Not yet   | Currently, rate-limited IPs are only temporarily blocked in-memory.         |
+| Monitoring / restart strategy       | ❌ Not yet   | No external service monitor. Recommend `systemd`, `tmux`, or Docker.        |
+| Log shipping / syslog integration   | ❌ Not yet   | Logs are local only. Recommend syslog or ELK stack for central logging.     |
+
+### 🧠 Summary
+
+The VPN ensures encrypted and authenticated access, with SOCKS5 login and connection throttling to prevent abuse. Further improvements like persistent IP banning, production-grade TLS certs, and firewall integration are recommended for full deployment.
+
