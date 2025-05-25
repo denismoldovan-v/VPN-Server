@@ -76,8 +76,8 @@ def main():
 
     logger.info(f"[VPN CLIENT] Configured TUN interface: {tun_name} with IP {client_ip}, server peer: {server_ip}")
 
-    threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock)).start()
-    threading.Thread(target=forward_socket_to_tun, args=(sock, tun_fd)).start()
+    threading.Thread(target=forward_tun_to_socket, args=(tun_fd, sock, tun_name)).start()
+    threading.Thread(target=forward_socket_to_tun, args=(sock, tun_fd, tun_name)).start()
 
 if __name__ == "__main__":
     main()
