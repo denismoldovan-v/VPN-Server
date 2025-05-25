@@ -36,5 +36,7 @@ else
     exit 1
 fi
 
+echo "Uruchamianie SOCKS5 proxy..."
+sudo env "PATH=$(realpath $VENV_DIR)/bin:$PATH" python3 socks5_proxy.py &
 echo "Uruchamianie serwera VPN (main.py + tun_server.py)..."
 sudo env "PATH=$(realpath $VENV_DIR)/bin:$PATH" python3 tun_server.py
