@@ -3,6 +3,7 @@ import ssl
 import threading
 import os
 import time
+import subprocess
 
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_private_key, sign_with_private_key
@@ -13,17 +14,37 @@ logger = setup_logger("vpn.log")
 SERVER_IP = "91.99.126.179"
 SERVER_PORT = 5555
 
-def forward_tun_to_socket(tun_fd, sock):
-    while True:
-        packet = os.read(tun_fd, 2048)
-        sock.sendall(packet)
+def cleanup_interface(name):
+    try:
+        logger.info(f"[CLEANUP] Deleting interface {name}")
+        subprocess.run(["ip", "link", "delete", name], check=True)
+    except subprocess.CalledProcessError:
+        logger.warning(f"[CLEANUP] Interface {name} may already be deleted.")
+    except Exception as e:
+        logger.error(f"[CLEANUP ERROR] Unexpected error when deleting {name}: {e}")
 
-def forward_socket_to_tun(sock, tun_fd):
-    while True:
-        packet = sock.recv(2048)
-        if not packet:
-            break
-        os.write(tun_fd, packet)
+def forward_tun_to_socket(tun_fd, sock, tun_name):
+    try:
+        while True:
+            packet = os.read(tun_fd, 2048)
+            sock.sendall(packet)
+    except:
+        pass
+    finally:
+        cleanup_interface(tun_name)
+
+def forward_socket_to_tun(sock, tun_fd, tun_name):
+    try:
+        while True:
+            packet = sock.recv(2048)
+            if not packet:
+                break
+            os.write(tun_fd, packet)
+    except Exception as e:
+        logger.warning(f"[FORWARD] socket→tun forwarding error: {e}")
+    finally:
+        cleanup_interface(tun_name)
+
 
 def authenticate_with_server(sock):
     private_key = load_private_key("keys/private.pem")
