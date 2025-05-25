@@ -9,12 +9,14 @@ import sys
 import ssl
 import threading
 import json
+import time
 
 
 from tun_interface import create_tun_interface, configure_interface
 from crypto_utils import load_public_key, verify_signature
 from logger import setup_logger
 from socks5_proxy import start_socks5_proxy
+from collections import defaultdict
 
 logger = setup_logger("vpn.log")
 
@@ -22,6 +24,11 @@ logger = setup_logger("vpn.log")
 created_interfaces = []
 
 SERVER_TUN_IP = "10.8.0.1"
+
+#DoS protection vars
+connection_attempts = defaultdict(list)
+BLOCK_WINDOW = 60 #seconds
+MAX_ATTEMPTS = 5 
 
 def delete_interfaces():
     for iface in created_interfaces:
@@ -87,8 +94,22 @@ def authenticate_client(sock) -> bool:
 
 def handle_client(client_sock, addr):
     global client_counter
+    ip = addr[0]
 
     logger.info(f"[VPN SERVER] New connection from {addr}")
+
+
+     # DoS protection: count attempts
+    now = time.time()
+    connection_attempts[ip] = [t for t in connection_attempts[ip] if now - t < BLOCK_WINDOW]
+    connection_attempts[ip].append(now)
+
+    if len(connection_attempts[ip]) > MAX_ATTEMPTS:
+        logger.warning(f"[SECURITY] Too many attempts from {ip}, connection rejected.")
+        client_sock.close()
+        return
+
+
     if not authenticate_client(client_sock):
         logger.info(f"[VPN SERVER] Client {addr} failed authentication.")
         client_sock.close()
