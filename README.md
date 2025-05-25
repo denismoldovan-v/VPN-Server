@@ -51,19 +51,38 @@ This allows the server to be easily reconfigured without changing the source cod
 
 ## 🚀 Getting Started
 
-1. Ensure you're running on a Linux system with /dev/net/tun available.
-2. Create the `keys/` folder if it doesn't exist.
-3. Generate RSA keys (once only):
+1. Ensure you're running on a **Linux system** with support for `/dev/net/tun`, `sudo`, and `tcpdump`.
 
-   from crypto_utils import generate_key_pair  
-   generate_key_pair("keys/private.pem", "keys/public.pem")
+2. Clone the repository and enter the project directory:
 
-4. Launch the VPN server with root privileges:
+   ```bash
+   git clone <repo_url>
+   cd <repo_name>
+   ```
 
-   sudo python3 main.py
+3. Make sure the test script and startup files are executable:
 
-5. Connect any SOCKS5-compatible client (e.g. curl, Firefox, proxychains) to:  
-   `localhost:1080`
+   ```bash
+   chmod +x run.sh run_client.sh test_integration.sh
+   ```
+
+4. Run the full integration test (server + client + validation):
+
+   ```bash
+   ./test_integration.sh
+   ```
+
+This will:
+
+- Build the Python virtual environment
+- Install dependencies from `requirements.txt`
+- Generate RSA keys (if missing)
+- Start the VPN server and client
+- Send real traffic through the VPN using `curl`
+- Validate TLS encryption with `tcpdump`
+- Confirm client authentication and unique IP in logs
+- Clean up all TUN interfaces and processes
+
 
 
 ## 🧱 Architecture
