@@ -26,11 +26,13 @@ CLIENT_PID=$!
 sleep 4
 
 echo ""
-echo "==================== [4] curl przez SOCKS5 (czy tunel działa) ==================="
+echo "==================== [4] curl przez SOCKS5 (czy tunel działa) ===================="
 curl -s --proxy-user vpnuser:vpnpass --proxy socks5h://localhost:$SOCKS5_PORT http://example.com > curl_output.txt || true
 
-echo "Pierwsze 5 linii odpowiedzi HTTP:"
+echo ""
+echo "--- Pierwsze 5 linii odpowiedzi HTTP ---"
 head -n 5 curl_output.txt
+echo "--- koniec curl_output ---"
 
 echo ""
 echo "==================== [5] Sprawdzanie logu uwierzytelnienia ======================="
@@ -38,7 +40,9 @@ if grep -a "authenticated" "$LOG" > /dev/null; then
     echo "Klient został uwierzytelniony (log zawiera 'authenticated')"
 else
     echo "Klient NIE został uwierzytelniony"
+    echo "--- tail vpn.log ---"
     tail -n 20 "$LOG"
+    echo "--- koniec tail ---"
     kill $SERVER_PID $CLIENT_PID || true
     exit 1
 fi
@@ -63,8 +67,9 @@ else
 fi
 
 echo ""
-echo "tcpdump – ostatnie pakiety:"
+echo "--- tcpdump – ostatnie pakiety ---"
 tail -n 5 tcpdump_output.txt
+echo "--- koniec tcpdump ---"
 
 echo ""
 echo "==================== [8] Sprzątanie: kill + tun cleanup ==========================="
